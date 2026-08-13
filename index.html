@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>유메의 노래책</title>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --accent: #d2f7fe;
+    --accent-rgb: 210, 247, 254;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f0f16;
+    --bg-card: #1b1b24;
+    --bg-elevated: #22222c;
+    --border: #2c2c37;
+    --text: #e8e8f0;
+    --text-dim: #9a9aab;
+    --text-faint: #7a7a8a;
+  }
+  :root[data-theme="light"] {
+    --bg: #f2f2f6;
+    --bg-card: #ffffff;
+    --bg-elevated: #f7f7fa;
+    --border: #e3e3ec;
+    --text: #1c1c26;
+    --text-dim: #55556a;
+    --text-faint: #86869c;
+  }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+  }
+  .page { width: 100%; max-width: 640px; padding: 24px 20px 60px; }
+  h1 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .theme-btn {
+    width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-dim); cursor: pointer;
+  }
+  .theme-btn:hover { color: var(--text); }
+  .theme-btn svg { width: 15px; height: 15px; }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
+  input[type="search"] {
+    flex: 1; min-width: 0; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text); font-size: 13px; outline: none;
+  }
+  .select {
+    position: relative;
+    flex-shrink: 0;
+  }
+  .select-trigger {
+    display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 100%;
+    min-width: 130px;
+    padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap;
+  }
+  .select-trigger:hover { border-color: var(--accent); }
+  .select-trigger svg {
+    width: 11px; height: 11px; flex-shrink: 0; color: var(--text-faint);
+    transform: rotate(90deg); transition: transform 0.15s ease;
+  }
+  .select.open .select-trigger svg { transform: rotate(270deg); }
+  .select-menu {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; width: 100%;
+    max-height: 260px; overflow-y: auto; padding: 4px; border-radius: 8px;
+    background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    display: none;
+  }
+  .select.open .select-menu { display: block; }
+  .select-item {
+    padding: 8px 10px; border-radius: 6px; font-size: 13px; color: var(--text); cursor: pointer; white-space: nowrap;
+  }
+  .select-item:hover { background: rgba(var(--accent-rgb), 0.12); }
+  .select-item.active { background: rgba(var(--accent-rgb), 0.16); color: var(--accent); font-weight: 600; }
+  /* 장르 칩이 많아도 줄바꿈 없이 한 줄로 유지하고, 좌우로 스크롤해서 넘겨봅니다. */
+  .chips {
+    display: flex; gap: 6px; margin-bottom: 14px;
+    flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: thin; -webkit-overflow-scrolling: touch;
+  }
+  .chips::-webkit-scrollbar { height: 5px; }
+  .chips::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb), 0.35); border-radius: 999px; }
+  .chips::-webkit-scrollbar-track { background: transparent; }
+  .chips .chip { flex-shrink: 0; white-space: nowrap; }
+  .chip {
+    padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-card);
+    color: var(--text-dim); font-size: 12px; cursor: pointer;
+  }
+  .chip.active { background: rgba(var(--accent-rgb), 0.16); border-color: var(--accent); color: var(--accent); }
+  .list { display: flex; flex-direction: column; gap: 6px; }
+  .row {
+    display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; border-radius: 10px;
+    background: var(--bg-card); border: 1px solid var(--border);
+  }
+  .row .tag {
+    flex-shrink: 0; padding: 2px 9px; border-radius: 999px; background: rgba(var(--accent-rgb), 0.14);
+    color: var(--accent); font-size: 11px;
+  }
+  .row .tag-empty { display: none; }
+  .row .title { flex: 1 1 auto; min-width: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 14px; }
+  .row .artist { flex-shrink: 0; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); font-size: 12px; cursor: pointer; }
+  .row .artist:hover { color: var(--accent); text-decoration: underline; }
+  .artist-filter {
+    display: none; align-items: center; gap: 6px; margin-bottom: 10px;
+    padding: 5px 12px; border-radius: 999px; border: 1px solid var(--accent);
+    background: rgba(var(--accent-rgb), 0.16); color: var(--accent); font-size: 12px;
+    cursor: pointer; width: fit-content;
+  }
+  .artist-filter.on { display: inline-flex; }
+  .row .stars { flex-shrink: 0; color: var(--accent); letter-spacing: 1px; font-size: 13px; }
+  .empty, .count { color: var(--text-faint); font-size: 12px; }
+  .count { margin-bottom: 8px; }
+  .empty { display: none; padding: 20px; text-align: center; font-size: 13px; }
+
+  @media (max-width: 480px) {
+    .page { padding: 16px 12px 48px; }
+    h1 { font-size: 16px; }
+    .toolbar { flex-wrap: wrap; }
+    input[type="search"] { flex: 1 1 100%; }
+    .select { flex: 1 1 100%; }
+    .select-trigger { width: 100%; justify-content: space-between; }
+    .select-menu { left: 0; right: 0; }
+    .row { padding: 9px 12px; flex-wrap: wrap; }
+    .row .artist { max-width: 45%; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header-row">
+    <h1>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" />
+      </svg>
+      유메의 노래책
+    </h1>
+    <button type="button" class="theme-btn" id="themeToggle" title="다크/라이트 전환">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></svg>
+    </button>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="가수 또는 제목 검색..." />
+    <div class="select" id="sortSelect">
+      <button type="button" class="select-trigger" id="sortTrigger">
+        <span id="sortTriggerLabel"></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+      <div class="select-menu" id="sortMenu"><div class="select-item" data-value="artist">가수이름순</div><div class="select-item" data-value="proficiency">숙련도순</div><div class="select-item" data-value="title">제목 가나다순</div><div class="select-item" data-value="newest">최신등록순</div><div class="select-item" data-value="oldest">오래된순</div></div>
+    </div>
+  </div>
+
+  <div class="chips" id="genreChips">
+    <button type="button" class="chip active" data-genre="">전체</button>
+    
+  </div>
+
+  <div class="artist-filter" id="artistFilter" title="가수 필터 해제"></div>
+
+  <div class="count" id="count"></div>
+  <div class="list" id="list">
+    
+  </div>
+  <div class="empty" id="empty">조건에 맞는 노래가 없습니다.</div>
+</div>
+<script>
+  var MOON = '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" />';
+  var SUN = '<circle cx="12" cy="12" r="4" /><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8" />';
+  var root = document.documentElement;
+  var themeIcon = document.getElementById('themeIcon');
+  function syncThemeIcon() {
+    themeIcon.innerHTML = root.getAttribute('data-theme') === 'light' ? MOON : SUN;
+  }
+  syncThemeIcon();
+  var savedTheme = localStorage.getItem('songbook-theme');
+  if (savedTheme === 'light' || savedTheme === 'dark') {
+    root.setAttribute('data-theme', savedTheme);
+    syncThemeIcon();
+  }
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('songbook-theme', next);
+    syncThemeIcon();
+  });
+
+  var searchInput = document.getElementById('search');
+  var list = document.getElementById('list');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+
+  // 장르 칩 줄 위에서 마우스 휠을 굴리면 좌우로 스크롤됩니다(가로 스크롤바를 잡지 않아도 되게).
+  var chipsRow = document.getElementById('genreChips');
+  chipsRow.addEventListener('wheel', function (e) {
+    if (e.deltaY === 0 || chipsRow.scrollWidth <= chipsRow.clientWidth) return;
+    e.preventDefault();
+    chipsRow.scrollLeft += e.deltaY;
+  }, { passive: false });
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.row'));
+  var activeGenres = []; // 비어있으면 '전체' - 여러 장르를 동시에 선택할 수 있습니다.
+
+  // 자체제작 정렬 드롭다운(네이티브 select 대신) - 트리거를 누르면 메뉴가 열리고,
+  // 항목을 클릭하면 선택되며 바깥을 클릭하면 닫힙니다.
+  var sortWrap = document.getElementById('sortSelect');
+  var sortTrigger = document.getElementById('sortTrigger');
+  var sortTriggerLabel = document.getElementById('sortTriggerLabel');
+  var sortMenu = document.getElementById('sortMenu');
+  var sortItems = Array.prototype.slice.call(sortMenu.querySelectorAll('.select-item'));
+  var currentSort = sortItems.length ? sortItems[0].getAttribute('data-value') : '';
+
+  function syncSortLabel() {
+    sortItems.forEach(function (item) {
+      item.classList.toggle('active', item.getAttribute('data-value') === currentSort);
+      if (item.getAttribute('data-value') === currentSort) sortTriggerLabel.textContent = item.textContent;
+    });
+  }
+  syncSortLabel();
+
+  sortTrigger.addEventListener('click', function (e) {
+    e.stopPropagation();
+    sortWrap.classList.toggle('open');
+  });
+  sortItems.forEach(function (item) {
+    item.addEventListener('click', function () {
+      currentSort = item.getAttribute('data-value');
+      syncSortLabel();
+      sortWrap.classList.remove('open');
+      applyFilter();
+    });
+  });
+  document.addEventListener('click', function (e) {
+    if (!sortWrap.contains(e.target)) sortWrap.classList.remove('open');
+  });
+
+  function compareRows(a, b, mode) {
+    if (mode === 'proficiency') {
+      var diff = Number(b.getAttribute('data-proficiency')) - Number(a.getAttribute('data-proficiency'));
+      if (diff !== 0) return diff;
+      return a.getAttribute('data-artist').localeCompare(b.getAttribute('data-artist'), 'ko');
+    }
+    if (mode === 'title') return a.getAttribute('data-title').localeCompare(b.getAttribute('data-title'), 'ko');
+    if (mode === 'newest') return b.getAttribute('data-created').localeCompare(a.getAttribute('data-created'));
+    if (mode === 'oldest') return a.getAttribute('data-created').localeCompare(b.getAttribute('data-created'));
+    return a.getAttribute('data-artist').localeCompare(b.getAttribute('data-artist'), 'ko');
+  }
+
+  // 가수 이름을 클릭하면 그 가수의 노래만 보여줍니다. 다시 누르거나(같은 가수)
+  // 위에 뜨는 "가수: OOO ✕" 뱃지를 클릭하면 해제됩니다.
+  var activeArtist = null;
+  var artistFilterEl = document.getElementById('artistFilter');
+
+  function syncArtistFilterBadge(displayName) {
+    if (activeArtist) {
+      artistFilterEl.textContent = '가수: ' + displayName + '  ✕';
+      artistFilterEl.classList.add('on');
+    } else {
+      artistFilterEl.classList.remove('on');
+    }
+  }
+  artistFilterEl.addEventListener('click', function () {
+    activeArtist = null;
+    syncArtistFilterBadge('');
+    applyFilter();
+  });
+  rows.forEach(function (row) {
+    var artistEl = row.querySelector('.artist');
+    if (!artistEl) return;
+    artistEl.addEventListener('click', function () {
+      var key = row.getAttribute('data-artist');
+      activeArtist = activeArtist === key ? null : key;
+      syncArtistFilterBadge(artistEl.textContent);
+      applyFilter();
+    });
+  });
+
+  function applyFilter() {
+    var q = searchInput.value.trim().toLowerCase();
+    var mode = currentSort;
+    var sorted = rows.slice().sort(function (a, b) { return compareRows(a, b, mode); });
+    sorted.forEach(function (row) { list.appendChild(row); });
+    var visible = 0;
+    sorted.forEach(function (row) {
+      var matchesSearch = !q || row.getAttribute('data-search').indexOf(q) !== -1;
+      var matchesGenre = activeGenres.length === 0 || activeGenres.indexOf(row.getAttribute('data-genre')) !== -1;
+      var matchesArtist = !activeArtist || row.getAttribute('data-artist') === activeArtist;
+      var show = matchesSearch && matchesGenre && matchesArtist;
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    document.getElementById('count').textContent = '총 ' + visible + '곡';
+    document.getElementById('empty').style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  searchInput.addEventListener('input', applyFilter);
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var g = chip.getAttribute('data-genre');
+      if (g === '') {
+        // '전체' - 선택을 모두 해제합니다.
+        activeGenres = [];
+      } else {
+        var idx = activeGenres.indexOf(g);
+        if (idx === -1) activeGenres.push(g);
+        else activeGenres.splice(idx, 1);
+      }
+      chips.forEach(function (c) {
+        var cg = c.getAttribute('data-genre');
+        c.classList.toggle('active', cg === '' ? activeGenres.length === 0 : activeGenres.indexOf(cg) !== -1);
+      });
+      applyFilter();
+    });
+  });
+  applyFilter();
+</script>
+</body>
+</html>
